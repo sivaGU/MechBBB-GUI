@@ -2,6 +2,8 @@
 
 A production-ready Streamlit web application for predicting Blood-Brain Barrier (BBB) permeability using the validated **BBB HandOff** ensemble model artifacts. The interface allows users to upload ligand structure files and receive BBB permeability predictions with RDKit feature calculations.
 
+Link: https://calcbb-gui-nutgvtdnn5qnaffucx8neo.streamlit.app/
+
 ## Features
 
 - **Single-ligand prediction interface** - Upload one ligand at a time for focused analysis
@@ -143,3 +145,4 @@ Questions, bug reports, or collaboration requests: **Dr. Sivanesan Dakshanamurth
 ## License
 
 See repository license file for details.
+

@@ -48,23 +48,23 @@ st.set_page_config(
 # Inject custom CSS for color palette
 st.markdown("""
 <style>
-    /* Color Palette: Light red theme */
+    /* Color Palette: Darker red theme (not pink) */
     :root {
-        --primary-color: #FF6B6B;
-        --primary-light: #FF8E8E;
-        --primary-lighter: #FFB3B3;
-        --accent-1: #FF9999;
-        --accent-2: #FFB3B3;
-        --accent-3: #FFCCCC;
-        --accent-4: #FFE0E0;
-        --accent-5: #FFE5E5;
-        --accent-6: #FFF0F0;
-        --very-light-red: #FFF5F5;
+        --primary-color: #DC3545;
+        --primary-light: #E85D6D;
+        --primary-lighter: #F07A87;
+        --accent-1: #C82333;
+        --accent-2: #BD2130;
+        --accent-3: #FFD5D9;
+        --accent-4: #FFE5E8;
+        --accent-5: #FFF0F2;
+        --accent-6: #FFF5F6;
+        --very-light-red: #FFF8F9;
     }
     
     /* Page background - very light red */
     .stApp {
-        background-color: #FFF5F5;
+        background-color: #FFF8F9;
     }
     
     /* Main background with margins */
@@ -74,165 +74,165 @@ st.markdown("""
         margin: 2rem auto;
         max-width: 1400px;
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
     }
     
-    /* Sidebar - light red */
+    /* Sidebar - darker red */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #FFE5E5 0%, #FFD5D5 100%);
+        background: linear-gradient(180deg, #FFE5E8 0%, #FFD5D9 100%);
         color: #333333;
     }
     
     [data-testid="stSidebar"] .css-1d391kg {
-        background-color: #FFE0E0;
+        background-color: #FFE5E8;
     }
     
     /* Primary buttons */
     .stButton > button {
-        background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+        background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);
         color: white;
         border: none;
         border-radius: 6px;
         font-weight: 600;
-        box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
         transition: all 0.3s ease;
     }
     
     .stButton > button:hover {
-        background: linear-gradient(135deg, #FF8E8E 0%, #FF9999 100%);
-        box-shadow: 0 4px 8px rgba(255, 107, 107, 0.4);
+        background: linear-gradient(135deg, #C82333 0%, #BD2130 100%);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
         transform: translateY(-1px);
     }
     
     .stButton > button:focus {
-        background: linear-gradient(135deg, #FF9999 0%, #FFB3B3 100%);
-        box-shadow: 0 0 0 0.3rem rgba(255, 107, 107, 0.3);
+        background: linear-gradient(135deg, #BD2130 0%, #A01A1F 100%);
+        box-shadow: 0 0 0 0.3rem rgba(220, 53, 69, 0.3);
     }
     
     /* Secondary buttons */
     .stDownloadButton > button {
-        background: linear-gradient(135deg, #FF8E8E 0%, #FF9999 100%);
+        background: linear-gradient(135deg, #C82333 0%, #BD2130 100%);
         color: white;
         border-radius: 6px;
         font-weight: 500;
     }
     
     .stDownloadButton > button:hover {
-        background: linear-gradient(135deg, #FF9999 0%, #FFB3B3 100%);
+        background: linear-gradient(135deg, #BD2130 0%, #A01A1F 100%);
     }
     
     /* Headers */
     h1, h2, h3 {
-        color: #FF6B6B;
+        color: #DC3545;
         font-weight: 700;
     }
     
     /* Links */
     a {
-        color: #FF6B6B;
+        color: #DC3545;
         text-decoration: none;
     }
     
     a:hover {
-        color: #FF8E8E;
+        color: #C82333;
         text-decoration: underline;
     }
     
     /* Metrics */
     [data-testid="stMetricValue"] {
-        color: #FF6B6B;
+        color: #DC3545;
         font-weight: 600;
     }
     
     /* Success boxes */
     .stSuccess {
-        background: linear-gradient(90deg, #FFE5E5 0%, #FFD5D5 100%);
-        border-left: 4px solid #FF6B6B;
+        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
+        border-left: 4px solid #DC3545;
         color: #333333;
         border-radius: 4px;
     }
     
     /* Info boxes */
     .stInfo {
-        background: linear-gradient(90deg, #FFE5E5 0%, #FFD5D5 100%);
-        border-left: 4px solid #FF6B6B;
+        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
+        border-left: 4px solid #DC3545;
         color: #333333;
         border-radius: 4px;
     }
     
     /* Warning boxes */
     .stWarning {
-        background: linear-gradient(90deg, #FFE0E0 0%, #FFD5D5 100%);
-        border-left: 4px solid #FF8E8E;
+        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
+        border-left: 4px solid #E85D6D;
         color: #333333;
         border-radius: 4px;
     }
     
     /* Error boxes */
     .stError {
-        background: linear-gradient(90deg, #FFD5D5 0%, #FFCCCC 100%);
-        border-left: 4px solid #FF6B6B;
+        background: linear-gradient(90deg, #FFD5D9 0%, #FFCCD1 100%);
+        border-left: 4px solid #DC3545;
         color: #333333;
         border-radius: 4px;
     }
     
     /* Radio buttons */
     .stRadio > label {
-        color: #FF6B6B;
+        color: #DC3545;
         font-weight: 500;
     }
     
     /* Selectbox */
     .stSelectbox > label {
-        color: #FF6B6B;
+        color: #DC3545;
         font-weight: 500;
     }
     
     /* Text input labels */
     .stTextInput > label {
-        color: #FF6B6B;
+        color: #DC3545;
         font-weight: 500;
     }
     
     /* Slider */
     .stSlider > label {
-        color: #FF6B6B;
+        color: #DC3545;
         font-weight: 500;
     }
     
     /* File uploader */
     .stFileUploader > label {
-        color: #FF6B6B;
+        color: #DC3545;
         font-weight: 500;
     }
     
     /* Expander */
     .streamlit-expanderHeader {
-        background: linear-gradient(90deg, #FFE5E5 0%, #FFD5D5 100%);
+        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
         color: #333333;
         border-radius: 4px;
         font-weight: 500;
     }
     
     .streamlit-expanderHeader:hover {
-        background: linear-gradient(90deg, #FFD5D5 0%, #FFCCCC 100%);
+        background: linear-gradient(90deg, #FFD5D9 0%, #FFCCD1 100%);
     }
     
     /* Dataframes */
     .stDataFrame {
-        border: 2px solid #FF6B6B;
+        border: 2px solid #DC3545;
         border-radius: 4px;
     }
     
     /* Dividers */
     hr {
-        border-color: #FF6B6B;
+        border-color: #DC3545;
         border-width: 2px;
     }
     
     /* Slider track */
     .stSlider .stSlider > div > div {
-        background-color: #FF6B6B;
+        background-color: #DC3545;
     }
     
     /* Navigation buttons - cleaner styling */
@@ -250,7 +250,7 @@ st.markdown("""
     
     /* Sidebar headers */
     [data-testid="stSidebar"] h3 {
-        color: #FF6B6B;
+        color: #DC3545;
         font-weight: 600;
         margin-top: 0;
         margin-bottom: 0.5rem;
@@ -263,21 +263,21 @@ st.markdown("""
     
     /* Sidebar success/info boxes */
     [data-testid="stSidebar"] .stSuccess {
-        background: linear-gradient(90deg, #FFE5E5 0%, #FFD5D5 100%);
-        border-left: 4px solid #FF6B6B;
+        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
+        border-left: 4px solid #DC3545;
         color: #333333;
     }
     
     [data-testid="stSidebar"] .stInfo {
-        background: linear-gradient(90deg, #FFE5E5 0%, #FFD5D5 100%);
-        border-left: 4px solid #FF6B6B;
+        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
+        border-left: 4px solid #DC3545;
         color: #333333;
     }
     
     /* Sidebar spacing */
     [data-testid="stSidebar"] hr {
         margin: 1rem 0;
-        border-color: rgba(255, 107, 107, 0.3);
+        border-color: rgba(220, 53, 69, 0.3);
     }
     
     /* Ensure main content has white background for readability */
@@ -1061,6 +1061,202 @@ def render_ligand_prediction_page():
     )
 
 
+def render_demo_page():
+    """Render the demo/tutorial page."""
+    st.title("Demo & Tutorial")
+    st.markdown(
+        """
+        Welcome to the BBB Permeability Prediction tool! This page will guide you through using the application
+        and provide example ligands for testing.
+        """
+    )
+    
+    st.divider()
+    
+    # How to use section
+    st.header("📖 How to Use the Tool")
+    
+    st.markdown("""
+    ### Step-by-Step Guide
+    
+    1. **Navigate to Ligand Prediction**
+       - Click the "🧪 Ligand Prediction" button in the sidebar
+       
+    2. **Upload Your Ligand File**
+       - Supported formats: SDF, MOL, PDB, PDBQT, MOL2, or CSV
+       - For CSV files, ensure there's a column named "smiles" containing SMILES strings
+       
+    3. **View Extracted Information**
+       - The app will automatically extract and standardize SMILES from your file
+       - You'll see the canonical SMILES and InChIKey
+       - A molecular structure visualization will be displayed (if available)
+       
+    4. **Compute Descriptors**
+       - Click "Compute Descriptors & Make Predictions"
+       - The app calculates 10 physicochemical descriptors and a 2048-bit Morgan fingerprint
+       
+    5. **View Predictions**
+       - If model artifacts are loaded, you'll see:
+         - Calibrated BBB permeability probability
+         - Raw ensemble probability
+         - Maximum similarity to training set
+         - Decision thresholds (MCC max and high sensitivity)
+       - Download results as CSV if needed
+       
+    ### Understanding the Results
+    
+    - **Calibrated Probability**: Post-processed probability from isotonic calibration (most reliable)
+    - **Raw Probability**: Average prediction from 5-model ensemble
+    - **Similarity Score**: Maximum Tanimoto similarity to training set (higher = more reliable)
+    - **Decision Thresholds**: 
+      - MCC Max: Optimized for balanced performance
+      - High Sensitivity: Optimized for detecting BBB+ compounds
+    """)
+    
+    st.divider()
+    
+    # Example ligands section
+    st.header("🧪 Example Ligands")
+    
+    st.markdown("""
+    Below are example ligand files you can download and use to test the tool. These demonstrate
+    different molecular structures and can help you understand the prediction workflow.
+    """)
+    
+    # Create example ligands directory structure info
+    st.info(
+        "**Note:** Example ligand files are stored in the `demo_ligands/` directory in the GitHub repository. "
+        "You can download them directly from the repository or use your own ligand files."
+    )
+    
+    # File upload section for users to contribute ligands
+    st.subheader("📤 Upload Demo Ligands")
+    
+    st.markdown("""
+    Have a ligand file you'd like to share as a demo example? Upload it here and it will be added to the repository.
+    """)
+    
+    uploaded_demo_file = st.file_uploader(
+        "Upload a demo ligand file:",
+        type=["sdf", "mol", "pdb", "pdbqt", "mol2", "csv"],
+        help="Upload a ligand file to be included in the demo examples",
+        key="demo_ligand_upload"
+    )
+    
+    if uploaded_demo_file is not None:
+        file_name = uploaded_demo_file.name
+        file_extension = os.path.splitext(file_name)[1]
+        
+        # Read file content once
+        file_content = uploaded_demo_file.read()
+        uploaded_demo_file.seek(0)
+        
+        # Show file info
+        st.success(f"File uploaded: {file_name}")
+        
+        # Try to extract SMILES for preview
+        try:
+            if file_extension.lower() == '.csv':
+                df_preview = pd.read_csv(uploaded_demo_file)
+                uploaded_demo_file.seek(0)
+                st.dataframe(df_preview.head(), use_container_width=True)
+            else:
+                extracted_smiles = extract_smiles_from_file(file_content, file_extension)
+                if extracted_smiles:
+                    st.info(f"**Extracted SMILES:** `{extracted_smiles}`")
+                    mol_id = standardize_and_identify(extracted_smiles)
+                    if mol_id:
+                        st.info(f"**Canonical SMILES:** `{mol_id.canonical_smiles}`")
+        except Exception as e:
+            st.warning(f"Could not preview file: {e}")
+        
+        # Instructions for adding to GitHub
+        st.markdown("""
+        ### Next Steps
+        
+        To add this file to the GitHub repository:
+        
+        1. **Save the file** to the `demo_ligands/` directory
+        2. **Commit and push** to the repository
+        3. **Update this page** with a link to the file
+        
+        **File will be saved as:** `demo_ligands/{file_name}`
+        """)
+        
+        # Download button for the uploaded file (so user can save it)
+        st.download_button(
+            label=f"Download {file_name}",
+            data=file_content,
+            file_name=file_name,
+            mime="application/octet-stream",
+            key=f"download_demo_{file_name}"
+        )
+    
+    st.divider()
+    
+    # Tips and best practices
+    st.header("💡 Tips & Best Practices")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        **File Format Tips:**
+        - SDF files work best for multi-conformer structures
+        - MOL files are standard for single structures
+        - CSV files should have a "smiles" column
+        - Ensure files are not corrupted or empty
+        """)
+    
+    with col2:
+        st.markdown("""
+        **Prediction Tips:**
+        - Check similarity scores - higher is better
+        - Low similarity (< 0.3) may indicate unreliable predictions
+        - Use calibrated probabilities for decision-making
+        - Download results for record-keeping
+        """)
+    
+    st.divider()
+    
+    # FAQ section
+    st.header("❓ Frequently Asked Questions")
+    
+    with st.expander("What file formats are supported?"):
+        st.markdown("""
+        The tool supports:
+        - **SDF** (Structure-Data File)
+        - **MOL** (MDL Molfile)
+        - **PDB** (Protein Data Bank format)
+        - **PDBQT** (AutoDock format)
+        - **MOL2** (Tripos MOL2 format)
+        - **CSV** (with 'smiles' column)
+        """)
+    
+    with st.expander("What if my file doesn't work?"):
+        st.markdown("""
+        - Ensure the file is not corrupted
+        - Check that the format matches the file extension
+        - For CSV files, verify there's a "smiles" column
+        - Try converting to a different format (e.g., SDF or MOL)
+        - Contact support if issues persist
+        """)
+    
+    with st.expander("What do the similarity scores mean?"):
+        st.markdown("""
+        Similarity scores (0-1) indicate how similar your molecule is to the training set:
+        - **High (> 0.7)**: Very similar, predictions are highly reliable
+        - **Medium (0.3-0.7)**: Somewhat similar, predictions are generally reliable
+        - **Low (< 0.3)**: Less similar, predictions may be less reliable
+        """)
+    
+    with st.expander("Can I predict multiple molecules at once?"):
+        st.markdown("""
+        Currently, the tool processes one ligand at a time. For CSV files, only the first row is processed.
+        Batch processing may be added in future updates.
+        """)
+
+
 # ============================================================================
 # MAIN APP - NAVIGATION
 # ============================================================================
@@ -1080,6 +1276,10 @@ def main():
                          key="nav_home"):
         st.session_state.current_page = "Home"
     
+    if st.sidebar.button("🎯 Demo", use_container_width=True,
+                         key="nav_demo"):
+        st.session_state.current_page = "Demo"
+    
     if st.sidebar.button("📚 Documentation", use_container_width=True,
                          key="nav_docs"):
         st.session_state.current_page = "Documentation"
@@ -1093,6 +1293,8 @@ def main():
     # Render selected page
     if st.session_state.current_page == "Home":
         render_home_page()
+    elif st.session_state.current_page == "Demo":
+        render_demo_page()
     elif st.session_state.current_page == "Documentation":
         render_documentation_page()
     elif st.session_state.current_page == "Ligand Prediction":

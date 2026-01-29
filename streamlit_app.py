@@ -45,197 +45,184 @@ st.set_page_config(
     },
 )
 
-# Inject custom CSS for color palette
+# Inject custom CSS for color palette - blue-teal scale
 st.markdown("""
 <style>
-    /* Color Palette: Darker red theme (not pink) */
+    /* Blue-teal palette: light powder -> midnight azure */
     :root {
-        --primary-color: #DC3545;
-        --primary-light: #E85D6D;
-        --primary-lighter: #F07A87;
-        --accent-1: #C82333;
-        --accent-2: #BD2130;
-        --accent-3: #FFD5D9;
-        --accent-4: #FFE5E8;
-        --accent-5: #FFF0F2;
-        --accent-6: #FFF5F6;
-        --very-light-red: #FFF8F9;
+        --light-powder-blue: #E0F4F8;
+        --soft-sky-blue: #B3E5F0;
+        --light-azure: #80D4E8;
+        --medium-steel-blue: #4DB8D0;
+        --deep-cerulean: #2A9DB5;
+        --rich-teal-blue: #1E7A8C;
+        --midnight-azure: #0D4F5C;
     }
     
-    /* Page background - very light red */
+    /* Page background - diagonal gradient: light powder (top-left) to midnight azure */
     .stApp {
-        background-color: #FFF8F9;
+        background: linear-gradient(135deg, #E0F4F8 0%, #B3E5F0 25%, #80D4E8 50%, #2A9DB5 75%, #0D4F5C 100%);
+        background-attachment: fixed;
     }
     
-    /* Main background with margins */
+    /* Main content - near-white card, slightly transparent */
     .main .block-container {
-        background-color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.95);
         padding: 2rem 3rem;
         margin: 2rem auto;
         max-width: 1400px;
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+        box-shadow: 0 4px 20px rgba(13, 79, 92, 0.15);
     }
     
-    /* Sidebar - darker red */
+    /* Sidebar - midnight azure (darkest blue) */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #FFE5E8 0%, #FFD5D9 100%);
-        color: #333333;
+        background: linear-gradient(180deg, #0D4F5C 0%, #0A3D47 100%);
+        color: #ffffff;
+        min-width: 200px !important;
+        max-width: 280px !important;
+        width: 280px !important;
+    }
+    
+    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+        width: 280px !important;
+        min-width: 200px !important;
+        max-width: 280px !important;
     }
     
     [data-testid="stSidebar"] .css-1d391kg {
-        background-color: #FFE5E8;
+        background-color: #0A3D47;
     }
     
-    /* Primary buttons */
+    /* Primary buttons - medium steel blue */
     .stButton > button {
-        background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);
+        background: linear-gradient(135deg, #4DB8D0 0%, #2A9DB5 100%);
         color: white;
         border: none;
         border-radius: 6px;
         font-weight: 600;
-        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        box-shadow: 0 2px 4px rgba(77, 184, 208, 0.35);
         transition: all 0.3s ease;
     }
     
     .stButton > button:hover {
-        background: linear-gradient(135deg, #C82333 0%, #BD2130 100%);
-        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+        background: linear-gradient(135deg, #2A9DB5 0%, #1E7A8C 100%);
+        box-shadow: 0 4px 8px rgba(42, 157, 181, 0.4);
         transform: translateY(-1px);
     }
     
     .stButton > button:focus {
-        background: linear-gradient(135deg, #BD2130 0%, #A01A1F 100%);
-        box-shadow: 0 0 0 0.3rem rgba(220, 53, 69, 0.3);
+        background: linear-gradient(135deg, #1E7A8C 0%, #0D4F5C 100%);
+        box-shadow: 0 0 0 0.3rem rgba(77, 184, 208, 0.35);
     }
     
-    /* Secondary buttons */
+    /* Secondary / download buttons */
     .stDownloadButton > button {
-        background: linear-gradient(135deg, #C82333 0%, #BD2130 100%);
+        background: linear-gradient(135deg, #2A9DB5 0%, #1E7A8C 100%);
         color: white;
         border-radius: 6px;
         font-weight: 500;
     }
     
     .stDownloadButton > button:hover {
-        background: linear-gradient(135deg, #BD2130 0%, #A01A1F 100%);
+        background: linear-gradient(135deg, #1E7A8C 0%, #0D4F5C 100%);
     }
     
-    /* Headers */
+    /* Headers - rich teal blue */
     h1, h2, h3 {
-        color: #DC3545;
+        color: #1E7A8C;
         font-weight: 700;
     }
     
     /* Links */
     a {
-        color: #DC3545;
+        color: #1E7A8C;
         text-decoration: none;
     }
     
     a:hover {
-        color: #C82333;
+        color: #2A9DB5;
         text-decoration: underline;
     }
     
     /* Metrics */
     [data-testid="stMetricValue"] {
-        color: #DC3545;
+        color: #1E7A8C;
         font-weight: 600;
     }
     
-    /* Success boxes */
+    /* Success boxes - light blues */
     .stSuccess {
-        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
-        border-left: 4px solid #DC3545;
-        color: #333333;
+        background: linear-gradient(90deg, #E0F4F8 0%, #B3E5F0 100%);
+        border-left: 4px solid #4DB8D0;
+        color: #1a1a1a;
         border-radius: 4px;
     }
     
     /* Info boxes */
     .stInfo {
-        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
-        border-left: 4px solid #DC3545;
-        color: #333333;
+        background: linear-gradient(90deg, #E0F4F8 0%, #B3E5F0 100%);
+        border-left: 4px solid #4DB8D0;
+        color: #1a1a1a;
         border-radius: 4px;
     }
     
     /* Warning boxes */
     .stWarning {
-        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
-        border-left: 4px solid #E85D6D;
-        color: #333333;
+        background: linear-gradient(90deg, #B3E5F0 0%, #80D4E8 100%);
+        border-left: 4px solid #2A9DB5;
+        color: #1a1a1a;
         border-radius: 4px;
     }
     
     /* Error boxes */
     .stError {
-        background: linear-gradient(90deg, #FFD5D9 0%, #FFCCD1 100%);
-        border-left: 4px solid #DC3545;
-        color: #333333;
+        background: linear-gradient(90deg, #B3E5F0 0%, #80D4E8 100%);
+        border-left: 4px solid #1E7A8C;
+        color: #1a1a1a;
         border-radius: 4px;
     }
     
-    /* Radio buttons */
-    .stRadio > label {
-        color: #DC3545;
-        font-weight: 500;
-    }
-    
-    /* Selectbox */
-    .stSelectbox > label {
-        color: #DC3545;
-        font-weight: 500;
-    }
-    
-    /* Text input labels */
-    .stTextInput > label {
-        color: #DC3545;
-        font-weight: 500;
-    }
-    
-    /* Slider */
-    .stSlider > label {
-        color: #DC3545;
-        font-weight: 500;
-    }
-    
-    /* File uploader */
+    /* Form labels - rich teal blue */
+    .stRadio > label,
+    .stSelectbox > label,
+    .stTextInput > label,
+    .stSlider > label,
     .stFileUploader > label {
-        color: #DC3545;
+        color: #1E7A8C;
         font-weight: 500;
     }
     
     /* Expander */
     .streamlit-expanderHeader {
-        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
-        color: #333333;
+        background: linear-gradient(90deg, #E0F4F8 0%, #B3E5F0 100%);
+        color: #1E7A8C;
         border-radius: 4px;
         font-weight: 500;
     }
     
     .streamlit-expanderHeader:hover {
-        background: linear-gradient(90deg, #FFD5D9 0%, #FFCCD1 100%);
+        background: linear-gradient(90deg, #B3E5F0 0%, #80D4E8 100%);
     }
     
     /* Dataframes */
     .stDataFrame {
-        border: 2px solid #DC3545;
+        border: 2px solid #4DB8D0;
         border-radius: 4px;
     }
     
     /* Dividers */
     hr {
-        border-color: #DC3545;
+        border-color: #4DB8D0;
         border-width: 2px;
     }
     
     /* Slider track */
     .stSlider .stSlider > div > div {
-        background-color: #DC3545;
+        background-color: #4DB8D0;
     }
     
-    /* Navigation buttons - cleaner styling */
+    /* Navigation buttons in sidebar - steel blue, white text */
     [data-testid="stSidebar"] .stButton {
         margin-bottom: 0.5rem;
     }
@@ -246,43 +233,50 @@ st.markdown("""
         font-size: 1rem;
         text-align: center;
         margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #2A9DB5 0%, #1E7A8C 100%) !important;
+        color: white !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
-    /* Sidebar headers */
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background: linear-gradient(135deg, #1E7A8C 0%, #0D4F5C 100%) !important;
+    }
+    
+    /* Sidebar headers - white on dark */
     [data-testid="stSidebar"] h3 {
-        color: #DC3545;
+        color: #ffffff;
         font-weight: 600;
         margin-top: 0;
         margin-bottom: 0.5rem;
     }
     
-    /* Sidebar text */
+    /* Sidebar text - light for contrast */
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] li {
-        color: #333333;
+        color: rgba(255, 255, 255, 0.9);
     }
     
-    /* Sidebar success/info boxes */
+    /* Sidebar success/info boxes - stay in blue family */
     [data-testid="stSidebar"] .stSuccess {
-        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
-        border-left: 4px solid #DC3545;
-        color: #333333;
+        background: linear-gradient(90deg, rgba(77, 184, 208, 0.3) 0%, rgba(42, 157, 181, 0.25) 100%);
+        border-left: 4px solid #4DB8D0;
+        color: #ffffff;
     }
     
     [data-testid="stSidebar"] .stInfo {
-        background: linear-gradient(90deg, #FFE5E8 0%, #FFD5D9 100%);
-        border-left: 4px solid #DC3545;
-        color: #333333;
+        background: linear-gradient(90deg, rgba(77, 184, 208, 0.25) 0%, rgba(42, 157, 181, 0.2) 100%);
+        border-left: 4px solid #4DB8D0;
+        color: #ffffff;
     }
     
     /* Sidebar spacing */
     [data-testid="stSidebar"] hr {
         margin: 1rem 0;
-        border-color: rgba(220, 53, 69, 0.3);
+        border-color: rgba(255, 255, 255, 0.25);
     }
     
-    /* Ensure main content has white background for readability */
+    /* Main content area - near white for readability */
     .main .block-container > div {
-        background-color: #ffffff;
+        background-color: transparent;
     }
 </style>
 """, unsafe_allow_html=True)

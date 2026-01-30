@@ -695,7 +695,7 @@ def render_home_page():
         )
 
     st.info(
-        "**Ready to predict!** Use the 'Ligand Prediction' page in the sidebar to upload your SMILES strings or CSV files and get BBB permeability predictions."
+        "**Ready to predict!** Use the 'CalcBB Prediction' page in the sidebar to upload your SMILES strings or CSV files and get BBB permeability predictions."
     )
 
     st.markdown(
@@ -703,7 +703,7 @@ def render_home_page():
         ---
         ### Roadmap
         1. **Completed** – Communication spine: home and documentation pages summarizing the Tab 4-5 manuscript content.  
-        2. **Completed** – Ligand intake tab with SMILES/CSV upload, descriptor generation, and model scoring (see Ligand Prediction page).  
+        2. **Completed** – Ligand intake tab with SMILES/CSV upload, descriptor generation, and model scoring (see CalcBB Prediction page).  
         3. **Planned** – Calibration overlay for user-submitted batches and automated report exports (PDF/CSV).
         """
     )
@@ -1085,8 +1085,8 @@ def render_demo_page():
     st.markdown("""
     ### Step-by-Step Guide
     
-    1. **Navigate to Ligand Prediction**
-       - Click the "Ligand Prediction" button in the sidebar
+    1. **Navigate to CalcBB Prediction**
+       - Click the "CalcBB Prediction" button in the sidebar
        
     2. **Upload Your Ligand File**
        - Supported formats: SDF, MOL, PDB, PDBQT, MOL2, or CSV
@@ -1290,9 +1290,9 @@ def main():
                          key="nav_docs"):
         st.session_state.current_page = "Documentation"
     
-    if st.sidebar.button("Ligand Prediction", use_container_width=True,
+    if st.sidebar.button("CalcBB Prediction", use_container_width=True,
                          key="nav_prediction"):
-        st.session_state.current_page = "Ligand Prediction"
+        st.session_state.current_page = "CalcBB Prediction"
     
     st.sidebar.markdown("---")
     
@@ -1303,7 +1303,7 @@ def main():
         render_demo_page()
     elif st.session_state.current_page == "Documentation":
         render_documentation_page()
-    elif st.session_state.current_page == "Ligand Prediction":
+    elif st.session_state.current_page == "CalcBB Prediction":
         render_ligand_prediction_page()
 
 

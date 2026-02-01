@@ -1,11 +1,13 @@
 """
-MechBBB Streamlit GUI — Two-stage mechanistically augmented BBB permeability classifier (Model C).
+MechBBB Streamlit GUI. Two-stage mechanistically augmented BBB permeability classifier (Model C).
 
 Run from this folder (project root):
   streamlit run streamlit_app.py
 """
+import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Ensure project root (this folder) is on path for src.mechbbb
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -16,16 +18,81 @@ HANDOFF_DIR = PROJECT_ROOT
 
 import streamlit as st
 import pandas as pd
+from rdkit import Chem
 
 from src.mechbbb.predict import predict_single, predict_batch, load_predictor
+
+
+def extract_smiles_from_file(file_content: bytes, file_extension: str) -> Optional[str]:
+    """
+    Extract SMILES string from various molecular file formats.
+    Supported formats: SDF, PDB, PDBQT, MOL, MOL2, CSV (first row only).
+    """
+    try:
+        ext = file_extension.lower()
+        if ext == ".sdf":
+            from io import StringIO
+            sdf_data = StringIO(file_content.decode("utf-8"))
+            supplier = Chem.SDMolSupplier(sdf_data)
+            for m in supplier:
+                if m is not None:
+                    return Chem.MolToSmiles(m, canonical=True)
+        elif ext == ".mol":
+            mol = Chem.MolFromMolBlock(file_content.decode("utf-8"))
+            if mol:
+                return Chem.MolToSmiles(mol, canonical=True)
+        elif ext == ".pdb":
+            mol = Chem.MolFromPDBBlock(file_content.decode("utf-8"))
+            if mol:
+                return Chem.MolToSmiles(mol, canonical=True)
+            lines = file_content.decode("utf-8").split("\n")
+            for line in lines:
+                if "SMILES" in line.upper():
+                    parts = line.split()
+                    for i, part in enumerate(parts):
+                        if "SMILES" in part.upper() and i + 1 < len(parts):
+                            potential = parts[i + 1]
+                            mol = Chem.MolFromSmiles(potential)
+                            if mol:
+                                return Chem.MolToSmiles(mol, canonical=True)
+        elif ext == ".pdbqt":
+            mol = Chem.MolFromPDBBlock(file_content.decode("utf-8"))
+            if mol:
+                return Chem.MolToSmiles(mol, canonical=True)
+            lines = file_content.decode("utf-8").split("\n")
+            for line in lines:
+                if "SMILES" in line.upper():
+                    parts = line.split()
+                    for i, part in enumerate(parts):
+                        if "SMILES" in part.upper() and i + 1 < len(parts):
+                            potential = parts[i + 1]
+                            mol = Chem.MolFromSmiles(potential)
+                            if mol:
+                                return Chem.MolToSmiles(mol, canonical=True)
+        elif ext == ".mol2":
+            try:
+                mol = Chem.MolFromMol2Block(file_content.decode("utf-8"))
+                if mol:
+                    return Chem.MolToSmiles(mol, canonical=True)
+            except Exception:
+                pass
+        elif ext == ".csv":
+            from io import BytesIO
+            df = pd.read_csv(BytesIO(file_content))
+            col = next((c for c in df.columns if c.lower() in ("smiles", "smi") or c == "SMILES"), None)
+            if col and len(df) > 0:
+                return str(df[col].iloc[0]).strip()
+    except Exception:
+        pass
+    return None
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
 st.set_page_config(
-    page_title="MechBBB — BBB Permeability Studio",
-    page_icon="🧪",
+    page_title="MechBBB - BBB Permeability Studio",
+    page_icon=None,
     layout="wide",
     menu_items={
         "Report a bug": "https://github.com/your-org/mechbbb-gui/issues",
@@ -272,7 +339,7 @@ DEFAULT_THRESHOLD = 0.35
 
 def render_home_page():
     """Render the home/dashboard page."""
-    st.title("🧪 MechBBB — Blood-Brain Barrier Permeability Studio")
+    st.title("MechBBB - Blood-Brain Barrier Permeability Studio")
     st.caption(
         "Two-stage mechanistically augmented BBB permeability classifier (Model C)."
     )
@@ -302,9 +369,9 @@ def render_home_page():
     st.markdown(
         """
         ### Model highlights
-        - **Stage-1:** LightGBM models trained on auxiliary mechanistic datasets (BBBP excluded) → p_efflux, p_influx, p_pampa.
+        - **Stage-1:** LightGBM models trained on auxiliary mechanistic datasets (BBBP excluded) yield p_efflux, p_influx, p_pampa.
         - **Stage-2:** Model C = PhysChem + ECFP4 + mechanistic probs; ensemble of 5 seeds; threshold 0.35.
-        - **No tuning on external data** — threshold selected on BBBP validation set only.
+        - **No tuning on external data:** threshold selected on BBBP validation set only.
         """
     )
 
@@ -320,9 +387,9 @@ def render_home_page():
         """
         ---
         ### Navigation
-        - **Home** — This overview
-        - **Documentation** — Setup, model details, and usage
-        - **CalcBB Prediction** — Run predictions (Single SMILES or Batch CSV)
+        - **Home:** This overview
+        - **Documentation:** Setup, model details, and usage
+        - **CalcBB Prediction:** Run predictions (SMILES, structure files, or Batch CSV)
         """
     )
 
@@ -336,7 +403,7 @@ def render_documentation_page():
         """
         ## Purpose
         This application provides a Streamlit interface for the MechBBB two-stage mechanistically augmented
-        BBB permeability classifier (Model C). It supports single SMILES prediction and batch CSV processing.
+        BBB permeability classifier (Model C). It supports single SMILES input, structure file upload (SDF, MOL, PDB, PDBQT, MOL2), and batch CSV processing.
         """
     )
 
@@ -352,7 +419,7 @@ def render_documentation_page():
         │   └── cli.py            # Command-line interface
         └── artifacts/            # Model artifacts
             ├── stage1_efflux.joblib, stage1_influx.joblib, stage1_pampa.joblib
-            ├── stage2_modelC/    # model_seed0.pkl … model_seed4.pkl
+            ├── stage2_modelC/    # model_seed0.pkl through model_seed4.pkl
             ├── threshold.json
             └── feature_config.json
         ```
@@ -372,8 +439,8 @@ def render_documentation_page():
     st.markdown(
         """
         ## Model overview (Model C)
-        - **Stage-1:** LightGBM models on PhysChem + ECFP4 → p_efflux, p_influx, p_pampa.
-        - **Stage-2:** 5-model ensemble on PhysChem + ECFP4 + mechanistic probs → P(BBB+).
+        - **Stage-1:** LightGBM models on PhysChem + ECFP4 yield p_efflux, p_influx, p_pampa.
+        - **Stage-2:** 5-model ensemble on PhysChem + ECFP4 + mechanistic probs yields P(BBB+).
         - **Threshold:** 0.35 (MCC-optimal on BBBP validation set).
         - **Features:** 10 physicochemical descriptors + 2048-bit ECFP4 + 3 mechanistic probabilities = 2061 total.
         """
@@ -387,11 +454,11 @@ def render_documentation_page():
         python -m src.mechbbb.cli --smiles "CCO" "c1ccccc1" --output out.csv
         python -m src.mechbbb.cli --input example_inputs.csv --output out.csv
         ```
-        Output columns: `smiles`, `canonical_smiles`, `prob_BBB+`, `BBB_class`, `p_efflux`, `p_influx`, `p_pampa`, `threshold`, `error`.
+        Output columns: smiles, canonical_smiles, prob_BBB+, BBB_class, p_efflux, p_influx, p_pampa, threshold, error.
         """
     )
 
-    st.success("Questions? Contact: Dr. Sivanesan Dakshanamurthy — sd233@georgetown.edu")
+    st.success("Questions? Contact: Dr. Sivanesan Dakshanamurthy (sd233@georgetown.edu)")
 
 
 def render_calcbb_prediction_page():
@@ -399,10 +466,10 @@ def render_calcbb_prediction_page():
     st.title("BBB Permeability Prediction")
     st.markdown(
         """
-        Predict BBB permeability using MechBBB (Model C). Enter a SMILES string or upload a CSV file.
+        Predict BBB permeability using MechBBB (Model C). Enter a SMILES string, upload a structure file (SDF, MOL, PDB, PDBQT, MOL2), or upload a CSV file for batch processing.
         The model outputs P(BBB+), mechanistic probabilities (p_efflux, p_influx, p_pampa), and classification.
         
-        **Input modes:** Single SMILES | Batch (CSV with smiles/SMILES column)
+        **Input modes:** Single SMILES or structure file | Batch (CSV with smiles/SMILES column)
         """
     )
 
@@ -413,7 +480,7 @@ def render_calcbb_prediction_page():
         st.info(
             "Ensure the **artifacts/** folder contains:\n"
             "- stage1_efflux.joblib, stage1_influx.joblib, stage1_pampa.joblib\n"
-            "- stage2_modelC/ with model_seed0.pkl … model_seed4.pkl\n"
+            "- stage2_modelC/ with model_seed0.pkl through model_seed4.pkl\n"
             "- threshold.json"
         )
         return
@@ -423,33 +490,52 @@ def render_calcbb_prediction_page():
         "Classification threshold", 0.0, 1.0, DEFAULT_THRESHOLD, 0.01
     )
     st.sidebar.info(
-        "**MechBBB (Model C)** · Default threshold 0.35 = MCC-optimal on BBBP validation."
+        "**MechBBB (Model C)** Default threshold 0.35 = MCC-optimal on BBBP validation."
     )
 
     st.divider()
 
     input_mode = st.radio(
         "Input mode",
-        ["Single SMILES", "Batch (CSV)"],
+        ["Single SMILES or structure file", "Batch (CSV)"],
         horizontal=True,
         key="input_mode",
     )
 
-    if input_mode == "Single SMILES":
+    if input_mode == "Single SMILES or structure file":
         smiles_input = st.text_input(
-            "SMILES",
+            "SMILES (or upload a structure file below)",
             placeholder="e.g. CCO, c1ccccc1",
             key="smiles_input",
         )
+        st.markdown("**Or upload a structure file:**")
+        structure_file = st.file_uploader(
+            "Upload structure file",
+            type=["sdf", "mol", "pdb", "pdbqt", "mol2"],
+            key="structure_upload",
+            help="Supported: SDF, MOL, PDB, PDBQT, MOL2. First molecule will be used.",
+        )
+        smiles_to_use = None
+        if structure_file:
+            content = structure_file.read()
+            ext = os.path.splitext(structure_file.name)[1]
+            extracted = extract_smiles_from_file(content, ext)
+            if extracted:
+                smiles_to_use = extracted
+                st.success(f"Extracted SMILES from {structure_file.name}")
+            else:
+                st.error(f"Could not extract SMILES from {ext.upper()} file. Try SMILES input instead.")
+        elif smiles_input and smiles_input.strip():
+            smiles_to_use = smiles_input.strip()
         if st.button("Predict", type="primary", key="btn_single"):
-            if smiles_input and smiles_input.strip():
+            if smiles_to_use:
                 result = predict_single(
-                    smiles_input.strip(),
+                    smiles_to_use,
                     threshold=threshold,
                     predictor=predictor,
                 )
                 if result.is_valid:
-                    st.success("✅ Valid SMILES")
+                    st.success("Valid SMILES")
                     col1, col2, col3 = st.columns(3)
                     with col1:
                         st.metric("P(BBB+)", f"{result.prob:.4f}")
@@ -467,9 +553,9 @@ def render_calcbb_prediction_page():
                     with mcol3:
                         st.metric("p_pampa", f"{result.p_pampa:.4f}")
                 else:
-                    st.error(f"❌ {result.error}")
+                    st.error(result.error)
             else:
-                st.warning("Please enter a SMILES string.")
+                st.warning("Please enter a SMILES string or upload a structure file (SDF, MOL, PDB, PDBQT, MOL2).")
 
     else:
         uploaded_file = st.file_uploader(
@@ -521,12 +607,12 @@ def render_calcbb_prediction_page():
 
     st.divider()
     st.caption(
-        "MechBBB (Model C). Stage-1: efflux/influx/PAMPA · Stage-2: PhysChem+ECFP+mech."
+        "MechBBB (Model C). Stage-1: efflux/influx/PAMPA. Stage-2: PhysChem+ECFP+mech."
     )
 
 
 # ============================================================================
-# MAIN — NAVIGATION
+# MAIN - NAVIGATION
 # ============================================================================
 
 def main():

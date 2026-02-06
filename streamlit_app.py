@@ -139,15 +139,76 @@ def get_mol_with_3d(smiles: str, file_content: Optional[bytes] = None, file_exte
     return mol
 
 
-def fetch_structure_image_from_database(smiles: str, width: int = 400, height: int = 400) -> Optional[bytes]:
+def calculate_optimal_image_size(mol, target_box_size: int = 500, fill_ratio: float = 0.75) -> int:
+    """
+    Calculate optimal image size based on molecule bounding box dimensions.
+    Smaller molecules get larger images (zoomed in), larger molecules get smaller images (zoomed out).
+    Returns size in pixels (square image).
+    """
+    if mol is None:
+        return target_box_size
+    try:
+        AllChem.Compute2DCoords(mol)
+        conf = mol.GetConformer()
+        if conf is None:
+            return target_box_size
+        coords = conf.GetPositions()
+        if len(coords) == 0:
+            return target_box_size
+        min_x, min_y = coords[:, 0].min(), coords[:, 1].min()
+        max_x, max_y = coords[:, 0].max(), coords[:, 1].max()
+        width = max_x - min_x
+        height = max_y - min_y
+        max_dim = max(width, height)
+        if max_dim <= 0:
+            return target_box_size
+        # RDKit 2D coords are in Angstroms (typically 2-20 Angstroms)
+        # Scale inversely: smaller max_dim -> larger image size
+        # Use a reference size (e.g., 5 Angstroms = 500px) and scale from there
+        reference_dim = 5.0  # Angstroms
+        # Smaller molecules (relative to reference) get larger images
+        scale_factor = reference_dim / max_dim
+        optimal_size = int(target_box_size * scale_factor * fill_ratio)
+        # Clamp between reasonable bounds (300-700 pixels for good visibility)
+        return max(300, min(700, optimal_size))
+    except Exception:
+        # Fallback: estimate from atom count
+        num_atoms = mol.GetNumAtoms()
+        if num_atoms <= 5:
+            return 600
+        elif num_atoms <= 15:
+            return 500
+        elif num_atoms <= 30:
+            return 400
+        else:
+            return 300
+
+
+def fetch_structure_image_from_database(smiles: str, mol=None, target_box_size: int = 500) -> Optional[bytes]:
     """
     Fetch a 2D structure image for the given SMILES from the NCI CACTUS
-    Chemical Identifier Resolver. Returns PNG image bytes or None on failure.
+    Chemical Identifier Resolver. Image size is dynamically calculated based on molecule size.
+    Returns PNG image bytes or None on failure.
     """
-    if not smiles or not str(smiles).strip():
+    smiles_str = str(smiles).strip() if smiles else ""
+    if not smiles_str:
         return None
+    # Calculate optimal size based on molecule dimensions
+    if mol is not None:
+        width = height = calculate_optimal_image_size(mol, target_box_size)
+    else:
+        # Estimate from SMILES length/atom count heuristic
+        estimated_atoms = len([c for c in smiles_str if c.isupper()])  # Rough estimate
+        if estimated_atoms <= 5:
+            width = height = 600
+        elif estimated_atoms <= 15:
+            width = height = 500
+        elif estimated_atoms <= 30:
+            width = height = 400
+        else:
+            width = height = 300
     try:
-        encoded = urllib.parse.quote(str(smiles).strip(), safe="")
+        encoded = urllib.parse.quote(smiles_str, safe="")
         url = (
             f"https://cactus.nci.nih.gov/chemical/structure/{encoded}/image"
             f"?width={width}&height={height}&format=png"
@@ -194,9 +255,10 @@ def get_mol_for_drawing(smiles: Optional[str] = None, file_content: Optional[byt
     return mol
 
 
-def render_ligand_structure(mol, size: int = 400) -> Optional[bytes]:
+def render_ligand_structure(mol, target_box_size: int = 500) -> Optional[bytes]:
     """
     Draw the ligand as a 2D chemical structure (atoms and bonds) using RDKit.
+    Image size is dynamically calculated based on molecule bounding box dimensions.
     Returns PNG image bytes or None on failure. Used as fallback when database lookup fails.
     """
     if mol is None:
@@ -207,6 +269,8 @@ def render_ligand_structure(mol, size: int = 400) -> Optional[bytes]:
             AllChem.Compute2DCoords(mol)
         except Exception:
             pass
+        # Calculate optimal size based on molecule dimensions
+        size = calculate_optimal_image_size(mol, target_box_size)
         img = Draw.MolToImage(mol, size=(size, size))
         if img is None:
             return None
@@ -738,22 +802,31 @@ def render_mechbbb_prediction_page():
                     # Ligand structure: fetch 2D image from database (CACTUS), fallback to RDKit
                     st.subheader("Ligand Structure")
                     smiles_for_lookup = (result.canonical_smiles or result.smiles or "").strip()
-                    img_bytes = fetch_structure_image_from_database(smiles_for_lookup) if smiles_for_lookup else None
+                    # Get mol first for size calculation
+                    file_content = st.session_state.get("structure_file_content")
+                    file_ext = st.session_state.get("structure_file_ext")
+                    mol = get_mol_for_drawing(
+                        smiles_for_lookup if smiles_for_lookup else None,
+                        file_content=file_content,
+                        file_extension=file_ext,
+                    )
+                    # Try database first with mol for size calculation
+                    img_bytes = fetch_structure_image_from_database(smiles_for_lookup, mol=mol) if smiles_for_lookup else None
                     source_label = "NCI CACTUS Chemical Structure Resolver"
                     if img_bytes is None:
-                        file_content = st.session_state.get("structure_file_content")
-                        file_ext = st.session_state.get("structure_file_ext")
-                        mol = get_mol_for_drawing(
-                            smiles_for_lookup if smiles_for_lookup else None,
-                            file_content=file_content,
-                            file_extension=file_ext,
-                        )
+                        # Fallback to RDKit drawing
                         img_bytes = render_ligand_structure(mol) if mol else None
                         source_label = "RDKit (database lookup unavailable)"
                     if img_bytes:
                         st.session_state.last_ligand_image = img_bytes
                         st.session_state.last_ligand_smiles = result.canonical_smiles
-                        st.image(io.BytesIO(img_bytes), use_container_width=False, width=400)
+                        # Calculate display width based on molecule size (larger for small molecules)
+                        if mol is not None:
+                            optimal_size = calculate_optimal_image_size(mol, target_box_size=500)
+                            display_width = min(600, max(300, optimal_size))
+                        else:
+                            display_width = 400
+                        st.image(io.BytesIO(img_bytes), use_container_width=False, width=display_width)
                         st.caption(f"2D structure · Source: {source_label}")
                     else:
                         st.warning(

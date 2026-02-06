@@ -17,6 +17,8 @@ if str(PROJECT_ROOT) not in sys.path:
 HANDOFF_DIR = PROJECT_ROOT
 
 import io
+import urllib.request
+import urllib.parse
 import streamlit as st
 import pandas as pd
 from rdkit import Chem
@@ -137,7 +139,32 @@ def get_mol_with_3d(smiles: str, file_content: Optional[bytes] = None, file_exte
     return mol
 
 
-def get_mol_for_drawing(smiles: str, file_content: Optional[bytes] = None, file_extension: Optional[str] = None):
+def fetch_structure_image_from_database(smiles: str, width: int = 400, height: int = 400) -> Optional[bytes]:
+    """
+    Fetch a 2D structure image for the given SMILES from the NCI CACTUS
+    Chemical Identifier Resolver. Returns PNG image bytes or None on failure.
+    """
+    if not smiles or not str(smiles).strip():
+        return None
+    try:
+        encoded = urllib.parse.quote(str(smiles).strip(), safe="")
+        url = (
+            f"https://cactus.nci.nih.gov/chemical/structure/{encoded}/image"
+            f"?width={width}&height={height}&format=png"
+        )
+        req = urllib.request.Request(url, headers={"User-Agent": "MechBBB-GUI/1.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status != 200:
+                return None
+            data = resp.read()
+            if not data or len(data) < 100:
+                return None
+            return data
+    except Exception:
+        return None
+
+
+def get_mol_for_drawing(smiles: Optional[str] = None, file_content: Optional[bytes] = None, file_extension: Optional[str] = None):
     """
     Get an RDKit mol for 2D structure drawing (no 3D embedding required).
     Uses uploaded file if present, else SMILES. Returns Chem.Mol or None.
@@ -160,27 +187,32 @@ def get_mol_for_drawing(smiles: str, file_content: Optional[bytes] = None, file_
                 mol = Chem.MolFromMol2Block(text)
         except Exception:
             mol = None
-    if mol is None and smiles:
-        mol = Chem.MolFromSmiles(smiles)
+    if mol is None and smiles is not None:
+        smiles_str = str(smiles).strip()
+        if smiles_str:
+            mol = Chem.MolFromSmiles(smiles_str)
     return mol
 
 
 def render_ligand_structure(mol, size: int = 400) -> Optional[bytes]:
     """
     Draw the ligand as a 2D chemical structure (atoms and bonds) using RDKit.
-    Returns PNG image bytes or None on failure.
+    Returns PNG image bytes or None on failure. Used as fallback when database lookup fails.
     """
     if mol is None:
         return None
     try:
         from rdkit.Chem import Draw
-        # Ensure 2D coordinates exist for drawing (required for proper layout)
         try:
             AllChem.Compute2DCoords(mol)
         except Exception:
             pass
         img = Draw.MolToImage(mol, size=(size, size))
+        if img is None:
+            return None
         buf = io.BytesIO()
+        if hasattr(img, "mode") and img.mode not in ("RGB", "L"):
+            img = img.convert("RGB")
         img.save(buf, format="PNG")
         buf.seek(0)
         return buf.getvalue()
@@ -703,20 +735,31 @@ def render_mechbbb_prediction_page():
                     with mcol3:
                         st.metric("p_pampa", f"{result.p_pampa:.4f}")
 
-                    # Ligand structure (2D chemical drawing)
+                    # Ligand structure: fetch 2D image from database (CACTUS), fallback to RDKit
                     st.subheader("Ligand Structure")
-                    file_content = st.session_state.get("structure_file_content")
-                    file_ext = st.session_state.get("structure_file_ext")
-                    mol = get_mol_for_drawing(
-                        result.canonical_smiles,
-                        file_content=file_content,
-                        file_extension=file_ext,
-                    )
-                    img_bytes = render_ligand_structure(mol) if mol else None
+                    smiles_for_lookup = (result.canonical_smiles or result.smiles or "").strip()
+                    img_bytes = fetch_structure_image_from_database(smiles_for_lookup) if smiles_for_lookup else None
+                    source_label = "NCI CACTUS Chemical Structure Resolver"
+                    if img_bytes is None:
+                        file_content = st.session_state.get("structure_file_content")
+                        file_ext = st.session_state.get("structure_file_ext")
+                        mol = get_mol_for_drawing(
+                            smiles_for_lookup if smiles_for_lookup else None,
+                            file_content=file_content,
+                            file_extension=file_ext,
+                        )
+                        img_bytes = render_ligand_structure(mol) if mol else None
+                        source_label = "RDKit (database lookup unavailable)"
                     if img_bytes:
-                        st.image(img_bytes, use_container_width=False, width=400)
+                        st.session_state.last_ligand_image = img_bytes
+                        st.session_state.last_ligand_smiles = result.canonical_smiles
+                        st.image(io.BytesIO(img_bytes), use_container_width=False, width=400)
+                        st.caption(f"2D structure · Source: {source_label}")
                     else:
-                        st.warning("Could not draw structure for this molecule.")
+                        st.warning(
+                            "Could not retrieve or draw structure for this molecule."
+                            + (f" (SMILES: {result.canonical_smiles})" if result.canonical_smiles else "")
+                        )
                 else:
                     st.error(result.error)
             else:

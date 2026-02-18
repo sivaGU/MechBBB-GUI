@@ -1,5 +1,5 @@
 """
-MechBBB CLI. Predict from command line.
+MechBBB-ML CLI. Predict from command line.
 Usage:
   python -m src.mechbbb.cli --smiles "CCO" "c1ccccc1" --output out.csv --artifact-dir .
   python -m src.mechbbb.cli --input example_inputs.csv --output out.csv --artifact-dir .
@@ -13,7 +13,7 @@ from .predict import load_predictor, predict_batch, predict_single
 
 
 def main():
-    parser = argparse.ArgumentParser(description="MechBBB BBB permeability predictor")
+    parser = argparse.ArgumentParser(description="MechBBB-ML BBB permeability predictor")
     parser.add_argument("--smiles", nargs="+", help="SMILES strings to predict")
     parser.add_argument("--input", help="Input CSV file (must have SMILES column)")
     parser.add_argument("--output", help="Output CSV file")

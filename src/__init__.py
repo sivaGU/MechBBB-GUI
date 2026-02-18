@@ -1,1 +1,1 @@
-# MechBBB package
+# MechBBB-ML package

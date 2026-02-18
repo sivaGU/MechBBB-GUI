@@ -1,6 +1,6 @@
 # MechBBB-ML - Two-Stage Mechanistically Augmented BBB Permeability Classifier (Model C)
 
-A production-ready Streamlit GUI for predicting Blood-Brain Barrier (BBB) permeability using the validated **MechBBB Model C** two-stage ensemble.
+A production-ready Streamlit GUI for predicting Blood-Brain Barrier (BBB) permeability using the validated **MechBBB-ML Model C** two-stage ensemble.
 
 Link: https://mechbbb-gui-2ts5qorwtoyhv54wp4jpxg.streamlit.app/
 
@@ -46,7 +46,7 @@ The app will open at `http://localhost:8501`.
 
 ```
 .
-├── streamlit_app.py       # MechBBB GUI
+├── streamlit_app.py       # MechBBB-ML GUI
 ├── requirements.txt       # Dependencies
 ├── src/
 │   └── mechbbb/           # Prediction module

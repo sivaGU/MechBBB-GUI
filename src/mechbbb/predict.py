@@ -1,5 +1,5 @@
 """
-MechBBB prediction module. Two-stage Model C.
+MechBBB-ML prediction module. Two-stage Model C.
 Stage-1: efflux, influx, PAMPA (PhysChem + ECFP4)
 Stage-2: PhysChem + ECFP4 + mechanistic probs yields BBB+
 """
@@ -66,7 +66,7 @@ def _canonicalize_smiles(smiles: str) -> Optional[str]:
     return Chem.MolToSmiles(mol, canonical=True)
 
 
-class MechBBBPredictor:
+class MechBBB-MLPredictor:
     """Loaded predictor state (stage1 + stage2 models, threshold)."""
 
     def __init__(
@@ -148,8 +148,8 @@ class MechBBBPredictor:
         )
 
 
-def load_predictor(artifact_dir: Union[str, Path]) -> MechBBBPredictor:
-    """Load MechBBB predictor from artifact directory."""
+def load_predictor(artifact_dir: Union[str, Path]) -> MechBBB-MLPredictor:
+    """Load MechBBB-ML predictor from artifact directory."""
     base = Path(artifact_dir)
     art = base / "artifacts"
     if not art.exists():
@@ -167,7 +167,7 @@ def load_predictor(artifact_dir: Union[str, Path]) -> MechBBBPredictor:
         import json
         thresh_data = json.load(open(thresh_path, "r", encoding="utf-8"))
     threshold = float(thresh_data.get("threshold", 0.35))
-    return MechBBBPredictor(
+    return MechBBB-MLPredictor(
         stage1_efflux=stage1_efflux,
         stage1_influx=stage1_influx,
         stage1_pampa=stage1_pampa,
@@ -180,7 +180,7 @@ def predict_single(
     smiles: str,
     threshold: Optional[float] = None,
     artifact_dir: Union[str, Path] = ".",
-    predictor: Optional[MechBBBPredictor] = None,
+    predictor: Optional[MechBBB-MLPredictor] = None,
 ) -> PredictResult:
     """Predict for a single SMILES."""
     if predictor is None:
@@ -194,7 +194,7 @@ def predict_batch(
     smiles_list: List[str],
     threshold: Optional[float] = None,
     artifact_dir: Union[str, Path] = ".",
-    predictor: Optional[MechBBBPredictor] = None,
+    predictor: Optional[MechBBB-MLPredictor] = None,
 ) -> List[PredictResult]:
     """Predict for a list of SMILES."""
     if predictor is None:

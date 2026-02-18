@@ -1,5 +1,5 @@
 """
-MechBBB Streamlit GUI. Two-stage mechanistically augmented BBB permeability classifier (Model C).
+MechBBB-ML Streamlit GUI. Two-stage mechanistically augmented BBB permeability classifier (Model C).
 
 Run from this folder (project root):
   streamlit run streamlit_app.py
@@ -152,7 +152,7 @@ def fetch_structure_image_from_database(smiles: str, width: int = 400, height: i
             f"https://cactus.nci.nih.gov/chemical/structure/{encoded}/image"
             f"?width={width}&height={height}&format=png"
         )
-        req = urllib.request.Request(url, headers={"User-Agent": "MechBBB-GUI/1.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "MechBBB-ML-GUI/1.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             if resp.status != 200:
                 return None
@@ -225,7 +225,7 @@ def render_ligand_structure(mol, size: int = 400) -> Optional[bytes]:
 # ============================================================================
 
 st.set_page_config(
-    page_title="MechBBB - BBB Permeability Studio",
+    page_title="MechBBB-ML - BBB Permeability Studio",
     page_icon=None,
     layout="wide",
     menu_items={
@@ -473,7 +473,7 @@ DEFAULT_THRESHOLD = 0.35
 
 def render_home_page():
     """Render the home/dashboard page."""
-    st.title("MechBBB - Blood-Brain Barrier Permeability Studio")
+    st.title("MechBBB-ML - Blood-Brain Barrier Permeability Studio")
     st.caption(
         "Two-stage mechanistically augmented BBB permeability classifier (Model C)."
     )
@@ -493,7 +493,7 @@ def render_home_page():
         """
         ## Why this app exists
         Drug discovery teams struggle to predict whether small molecules cross the blood-brain barrier.
-        MechBBB (Model C) is a two-stage mechanistically augmented classifier that first predicts
+        MechBBB-ML (Model C) is a two-stage mechanistically augmented classifier that first predicts
         auxiliary ADME properties (efflux, influx, PAMPA) and then combines them with physicochemical
         and fingerprint features to predict BBB permeability. This approach improves both
         external generalization and interpretability.
@@ -514,7 +514,7 @@ def render_home_page():
     st.markdown("## Quick start")
 
     st.info(
-        "**Ready to predict!** Use the **MechBBB Prediction** page in the sidebar to enter SMILES strings or upload a CSV file and get BBB permeability predictions with mechanistic probabilities."
+        "**Ready to predict!** Use the **MechBBB-ML Prediction** page in the sidebar to enter SMILES strings or upload a CSV file and get BBB permeability predictions with mechanistic probabilities."
     )
 
     st.markdown(
@@ -523,7 +523,7 @@ def render_home_page():
         ### Navigation
         - **Home:** This overview
         - **Documentation:** Setup, model details, and usage
-        - **MechBBB Prediction:** Run predictions (SMILES, structure files, or Batch CSV)
+        - **MechBBB-ML Prediction:** Run predictions (SMILES, structure files, or Batch CSV)
         """
     )
 
@@ -531,12 +531,12 @@ def render_home_page():
 def render_documentation_page():
     """Render the documentation page."""
     st.title("Documentation & Runbook")
-    st.caption("Reference material for the MechBBB Model C classifier.")
+    st.caption("Reference material for the MechBBB-ML Model C classifier.")
 
     st.markdown(
         """
         ## Purpose
-        This application provides a Streamlit interface for the MechBBB two-stage mechanistically augmented
+        This application provides a Streamlit interface for the MechBBB-ML two-stage mechanistically augmented
         BBB permeability classifier (Model C). It supports single SMILES input, structure file upload (SDF, MOL, PDB, PDBQT, MOL2), and batch CSV processing.
         """
     )
@@ -606,11 +606,11 @@ def render_documentation_page():
 
 
 def render_mechbbb_prediction_page():
-    """Render the MechBBB prediction page."""
+    """Render the MechBBB-ML prediction page."""
     st.title("BBB Permeability Prediction")
     st.markdown(
         """
-        Predict BBB permeability using MechBBB (Model C). Enter a SMILES string, upload a structure file (SDF, MOL, PDB, PDBQT, MOL2), or upload a CSV file for batch processing.
+        Predict BBB permeability using MechBBB-ML (Model C). Enter a SMILES string, upload a structure file (SDF, MOL, PDB, PDBQT, MOL2), or upload a CSV file for batch processing.
         The model outputs P(BBB+), mechanistic probabilities (p_efflux, p_influx, p_pampa), and classification.
         
         **Input modes:** Single SMILES or structure file | Batch (CSV with smiles/SMILES column)
@@ -634,7 +634,7 @@ def render_mechbbb_prediction_page():
         "Classification threshold", 0.0, 1.0, DEFAULT_THRESHOLD, 0.01
     )
     st.sidebar.info(
-        "**MechBBB (Model C)** Default threshold 0.35 = MCC-optimal on BBBP validation."
+        "**MechBBB-ML (Model C)** Default threshold 0.35 = MCC-optimal on BBBP validation."
     )
 
     st.divider()
@@ -835,7 +835,7 @@ def render_mechbbb_prediction_page():
 
     st.divider()
     st.caption(
-        "MechBBB (Model C). Stage-1: efflux/influx/PAMPA. Stage-2: PhysChem+ECFP+mech."
+        "MechBBB-ML (Model C). Stage-1: efflux/influx/PAMPA. Stage-2: PhysChem+ECFP+mech."
     )
 
 
@@ -857,8 +857,8 @@ def main():
     if st.sidebar.button("Documentation", use_container_width=True, key="nav_docs"):
         st.session_state.current_page = "Documentation"
 
-    if st.sidebar.button("MechBBB Prediction", use_container_width=True, key="nav_prediction"):
-        st.session_state.current_page = "MechBBB Prediction"
+    if st.sidebar.button("MechBBB-ML Prediction", use_container_width=True, key="nav_prediction"):
+        st.session_state.current_page = "MechBBB-ML Prediction"
 
     st.sidebar.markdown("---")
 
@@ -866,7 +866,7 @@ def main():
         render_home_page()
     elif st.session_state.current_page == "Documentation":
         render_documentation_page()
-    elif st.session_state.current_page == "MechBBB Prediction":
+    elif st.session_state.current_page == "MechBBB-ML Prediction":
         render_mechbbb_prediction_page()
 
 

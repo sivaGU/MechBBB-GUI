@@ -1053,11 +1053,11 @@ def main():
     if st.sidebar.button("Documentation", use_container_width=True, key="nav_docs"):
         st.session_state.current_page = "Documentation"
 
-    if st.sidebar.button("MechBBB-ML Prediction", use_container_width=True, key="nav_prediction"):
-        st.session_state.current_page = "MechBBB-ML Prediction"
-
     if st.sidebar.button("Demo Prediction Tool", use_container_width=True, key="nav_demo"):
         st.session_state.current_page = "Demo Prediction Tool"
+
+    if st.sidebar.button("MechBBB-ML Prediction", use_container_width=True, key="nav_prediction"):
+        st.session_state.current_page = "MechBBB-ML Prediction"
 
     st.sidebar.markdown("---")
 

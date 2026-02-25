@@ -27,6 +27,7 @@ from rdkit.Chem import AllChem
 
 from src.mechbbb.predict import predict_single, predict_batch, load_predictor
 from similarity_module import compute_similarity, similarity_flag, compute_morgan
+from demo_ligands import CNS_PENETRATING_LIGANDS, NON_CNS_PENETRATING_LIGANDS
 
 
 def extract_smiles_from_file(file_content: bytes, file_extension: str) -> Optional[str]:
@@ -938,6 +939,102 @@ def render_mechbbb_prediction_page():
     )
 
 
+def render_demo_prediction_page():
+    """Render the Demo Prediction Tool page with known CNS+ and CNS- ligands."""
+    st.title("Demo Prediction Tool")
+    st.markdown(
+        """
+        Run predictions on **25 known CNS-penetrating (BBB+)** and **25 known non-CNS-penetrating (BBB−)** ligands.
+        Select a ligand from each dropdown and click **Predict** to compare model predictions with the expected classification.
+        """
+    )
+
+    try:
+        predictor = get_predictor()
+    except Exception as e:
+        st.error(f"Could not load model: {e}")
+        st.info(
+            "Ensure the **artifacts/** folder contains the model files (see Documentation)."
+        )
+        return
+
+    threshold = st.sidebar.slider(
+        "Classification threshold", 0.0, 1.0, DEFAULT_THRESHOLD, 0.01,
+        key="demo_threshold",
+    )
+
+    st.subheader("CNS-penetrating ligands (BBB+)")
+    cns_plus_labels = [f"{name}" for name, _ in CNS_PENETRATING_LIGANDS]
+    cns_plus_map = {name: smi for name, smi in CNS_PENETRATING_LIGANDS}
+    selected_cns_plus = st.selectbox(
+        "Select a known CNS-penetrating ligand",
+        options=cns_plus_labels,
+        key="demo_cns_plus",
+    )
+    smiles_cns_plus = cns_plus_map.get(selected_cns_plus, "")
+
+    st.subheader("Non-CNS-penetrating ligands (BBB−)")
+    cns_minus_labels = [f"{name}" for name, _ in NON_CNS_PENETRATING_LIGANDS]
+    cns_minus_map = {name: smi for name, smi in NON_CNS_PENETRATING_LIGANDS}
+    selected_cns_minus = st.selectbox(
+        "Select a known non-CNS-penetrating ligand",
+        options=cns_minus_labels,
+        key="demo_cns_minus",
+    )
+    smiles_cns_minus = cns_minus_map.get(selected_cns_minus, "")
+
+    st.divider()
+    st.subheader("Run prediction")
+
+    run_for = st.radio(
+        "Predict for",
+        ["CNS-penetrating ligand only", "Non-CNS-penetrating ligand only", "Both"],
+        horizontal=True,
+        key="demo_which",
+    )
+
+    if st.button("Predict", type="primary", key="btn_demo"):
+        to_run = []
+        if run_for in ("CNS-penetrating ligand only", "Both"):
+            to_run.append((selected_cns_plus, smiles_cns_plus, "CNS+ (expected BBB+)"))
+        if run_for in ("Non-CNS-penetrating ligand only", "Both"):
+            to_run.append((selected_cns_minus, smiles_cns_minus, "CNS− (expected BBB−)"))
+
+        for label, smiles, expected in to_run:
+            st.markdown(f"#### {label} — {expected}")
+            result = predict_single(smiles, threshold=threshold, predictor=predictor)
+            if result.is_valid:
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("P(BBB+)", f"{result.prob:.4f}")
+                with col2:
+                    st.metric("Prediction", result.bbb_class)
+                with col3:
+                    st.metric("Threshold", f"{threshold:.2f}")
+                st.caption(f"SMILES: `{smiles}`")
+                # Similarity if available
+                train_fps = get_train_fps()
+                if train_fps is not None:
+                    query_fp = compute_ecfp4_fingerprint(result.canonical_smiles)
+                    if query_fp is not None:
+                        max_sim = compute_similarity(query_fp, train_fps)
+                        sim_flag = similarity_flag(max_sim)
+                        st.metric("Max Similarity (ECFP4 Tanimoto)", f"{max_sim:.4f}")
+                        st.metric("Similarity Flag", sim_flag)
+                        if sim_flag == "low":
+                            st.warning(
+                                "⚠️ **Low similarity to training set** (similarity < 0.3). "
+                                "Predictions may be unreliable for this molecule."
+                            )
+            else:
+                st.error(result.error)
+            st.divider()
+
+    st.caption(
+        "MechBBB-ML (Model C). Demo ligands are from literature/PubChem/ChEMBL as known BBB+ or BBB−."
+    )
+
+
 # ============================================================================
 # MAIN - NAVIGATION
 # ============================================================================
@@ -959,6 +1056,9 @@ def main():
     if st.sidebar.button("MechBBB-ML Prediction", use_container_width=True, key="nav_prediction"):
         st.session_state.current_page = "MechBBB-ML Prediction"
 
+    if st.sidebar.button("Demo Prediction Tool", use_container_width=True, key="nav_demo"):
+        st.session_state.current_page = "Demo Prediction Tool"
+
     st.sidebar.markdown("---")
 
     if st.session_state.current_page == "Home":
@@ -967,6 +1067,8 @@ def main():
         render_documentation_page()
     elif st.session_state.current_page == "MechBBB-ML Prediction":
         render_mechbbb_prediction_page()
+    elif st.session_state.current_page == "Demo Prediction Tool":
+        render_demo_prediction_page()
 
 
 if __name__ == "__main__":

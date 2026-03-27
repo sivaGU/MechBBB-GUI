@@ -144,25 +144,58 @@ def get_mol_with_3d(smiles: str, file_content: Optional[bytes] = None, file_exte
 
 def fetch_structure_image_from_database(smiles: str, width: int = 400, height: int = 400) -> Optional[bytes]:
     """
-    Fetch a 2D structure image for the given SMILES from the NCI CACTUS
-    Chemical Identifier Resolver. Returns PNG image bytes or None on failure.
+    Fetch a high-quality 2D structure image for the given SMILES.
+    Tries PubChem first for crisp rendering, then falls back to NCI CACTUS.
     """
     if not smiles or not str(smiles).strip():
         return None
+
+    def _enhance_png(png_bytes: bytes) -> bytes:
+        """Improve contrast/sharpness so bonds and atom labels are less faded."""
+        try:
+            from PIL import Image, ImageEnhance
+
+            img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+            img = ImageEnhance.Contrast(img).enhance(1.35)
+            img = ImageEnhance.Sharpness(img).enhance(1.35)
+            out = io.BytesIO()
+            img.save(out, format="PNG")
+            return out.getvalue()
+        except Exception:
+            return png_bytes
+
     try:
         encoded = urllib.parse.quote(str(smiles).strip(), safe="")
-        url = (
+
+        # 1) PubChem PUG REST (usually higher-contrast rendering on cloud)
+        pubchem_url = (
+            f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{encoded}/PNG"
+            f"?image_size={width}x{height}"
+        )
+        req = urllib.request.Request(pubchem_url, headers={"User-Agent": "MechBBB-ML-GUI/1.0"})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            if resp.status == 200:
+                data = resp.read()
+                if data and len(data) > 100:
+                    return _enhance_png(data)
+    except Exception:
+        pass
+
+    try:
+        # 2) Fallback to CACTUS
+        encoded = urllib.parse.quote(str(smiles).strip(), safe="")
+        cactus_url = (
             f"https://cactus.nci.nih.gov/chemical/structure/{encoded}/image"
             f"?width={width}&height={height}&format=png"
         )
-        req = urllib.request.Request(url, headers={"User-Agent": "MechBBB-ML-GUI/1.0"})
+        req = urllib.request.Request(cactus_url, headers={"User-Agent": "MechBBB-ML-GUI/1.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             if resp.status != 200:
                 return None
             data = resp.read()
             if not data or len(data) < 100:
                 return None
-            return data
+            return _enhance_png(data)
     except Exception:
         return None
 
@@ -670,16 +703,18 @@ def render_mechbbb_prediction_page():
     st.subheader("Ligand Structure")
     preview_img = st.session_state.get("last_ligand_image")
     preview_smiles = st.session_state.get("last_ligand_smiles")
+    preview_slot = st.container()
     if preview_img:
-        _, preview_col, _ = st.columns([1, 3, 1])
-        with preview_col:
-            st.image(io.BytesIO(preview_img), use_container_width=False, width=520)
-            st.caption(
-                "Latest ligand preview"
-                + (f" · SMILES: `{preview_smiles}`" if preview_smiles else "")
-            )
+        with preview_slot:
+            _, preview_col, _ = st.columns([1, 3, 1])
+            with preview_col:
+                st.image(io.BytesIO(preview_img), use_container_width=False, width=520)
+                st.caption(
+                    "Latest ligand preview"
+                    + (f" · SMILES: `{preview_smiles}`" if preview_smiles else "")
+                )
     else:
-        st.info("Ligand preview will appear here after a valid single-molecule prediction.")
+        preview_slot.info("Ligand preview will appear here after a valid single-molecule prediction.")
 
     try:
         predictor = get_predictor()
@@ -835,16 +870,21 @@ def render_mechbbb_prediction_page():
                         file_extension=file_ext,
                     )
                     img_bytes = render_ligand_structure(mol) if mol else None
-                    source_label = "RDKit clean depiction"
                     if img_bytes is None and smiles_for_lookup:
                         img_bytes = fetch_structure_image_from_database(
                             smiles_for_lookup, width=900, height=700
                         )
-                        source_label = "NCI CACTUS fallback"
                     if img_bytes:
                         st.session_state.last_ligand_image = img_bytes
                         st.session_state.last_ligand_smiles = result.canonical_smiles
-                        st.rerun()
+                        with preview_slot:
+                            _, preview_col, _ = st.columns([1, 3, 1])
+                            with preview_col:
+                                st.image(io.BytesIO(img_bytes), use_container_width=False, width=520)
+                                st.caption(
+                                    "Latest ligand preview"
+                                    + (f" · SMILES: `{result.canonical_smiles}`" if result.canonical_smiles else "")
+                                )
                     else:
                         st.warning(
                             "Could not retrieve or draw structure for this molecule."

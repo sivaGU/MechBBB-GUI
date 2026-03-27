@@ -151,13 +151,37 @@ def fetch_structure_image_from_database(smiles: str, width: int = 400, height: i
         return None
 
     def _enhance_png(png_bytes: bytes) -> bytes:
-        """Improve contrast/sharpness so bonds and atom labels are less faded."""
+        """Boost contrast and thicken bonds/atom labels for clearer display."""
         try:
-            from PIL import Image, ImageEnhance
+            from PIL import Image, ImageEnhance, ImageFilter
 
             img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
-            img = ImageEnhance.Contrast(img).enhance(1.35)
-            img = ImageEnhance.Sharpness(img).enhance(1.35)
+            img = ImageEnhance.Contrast(img).enhance(1.5)
+
+            # Thicken dark strokes (bonds + letters): dilate per-channel on inverted intensity.
+            arr = np.asarray(img, dtype=np.float32)
+            out = np.empty_like(arr)
+            footprint = (5, 5)
+            try:
+                from scipy import ndimage
+
+                for c in range(3):
+                    inv = 255.0 - arr[:, :, c]
+                    thick = ndimage.grey_dilation(inv, size=footprint)
+                    out[:, :, c] = np.clip(255.0 - thick, 0.0, 255.0)
+            except Exception:
+                r, g, b = img.split()
+
+                def _thick_ch(ch):
+                    inv = Image.eval(ch, lambda x: 255 - x)
+                    inv = inv.filter(ImageFilter.MaxFilter(size=5))
+                    return Image.eval(inv, lambda x: 255 - x)
+
+                img = Image.merge("RGB", (_thick_ch(r), _thick_ch(g), _thick_ch(b)))
+                out = np.asarray(img, dtype=np.float32)
+
+            img = Image.fromarray(out.astype(np.uint8), mode="RGB")
+            img = ImageEnhance.Sharpness(img).enhance(1.25)
             out = io.BytesIO()
             img.save(out, format="PNG")
             return out.getvalue()

@@ -1111,6 +1111,28 @@ def render_demo_prediction_page():
     )
     smiles_cns_minus = cns_minus_map.get(selected_cns_minus, "")
 
+    st.markdown(
+        '<div class="section-heading-compact">Ligand structure (selected)</div>',
+        unsafe_allow_html=True,
+    )
+    pv1, pv2 = st.columns(2)
+    for col, title, smi in (
+        (pv1, selected_cns_plus, smiles_cns_plus),
+        (pv2, selected_cns_minus, smiles_cns_minus),
+    ):
+        with col:
+            st.caption(f"{title}")
+            mol_sel = get_mol_for_drawing(smi if smi else None)
+            img_sel = render_ligand_structure(mol_sel, size=320) if mol_sel else None
+            if img_sel is None and smi:
+                img_sel = fetch_structure_image_from_database(smi, width=320, height=250)
+            if img_sel:
+                st.image(io.BytesIO(img_sel), use_container_width=True)
+            elif smi:
+                st.caption("Could not draw structure for this SMILES.")
+            else:
+                st.caption("—")
+
     st.divider()
     st.subheader("Run prediction")
 
@@ -1132,14 +1154,30 @@ def render_demo_prediction_page():
             st.markdown(f"#### {label} — {expected}")
             result = predict_single(smiles, threshold=threshold, predictor=predictor)
             if result.is_valid:
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("P(BBB+)", f"{result.prob:.4f}")
-                with col2:
-                    st.metric("Prediction", result.bbb_class)
-                with col3:
-                    st.metric("Threshold", f"{threshold:.2f}")
-                st.caption(f"SMILES: `{smiles}`")
+                res_left, res_right = st.columns([1.1, 1])
+                with res_left:
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("P(BBB+)", f"{result.prob:.4f}")
+                    with col2:
+                        st.metric("Prediction", result.bbb_class)
+                    with col3:
+                        st.metric("Threshold", f"{threshold:.2f}")
+                    st.caption(f"SMILES: `{smiles}`")
+                smiles_for_demo = (result.canonical_smiles or result.smiles or smiles or "").strip()
+                mol_demo = get_mol_for_drawing(smiles_for_demo if smiles_for_demo else None)
+                img_demo = render_ligand_structure(mol_demo, size=400) if mol_demo else None
+                if img_demo is None and smiles_for_demo:
+                    img_demo = fetch_structure_image_from_database(smiles_for_demo)
+                with res_right:
+                    if img_demo:
+                        st.image(
+                            io.BytesIO(img_demo),
+                            caption="Ligand structure (2D)",
+                            use_container_width=True,
+                        )
+                    else:
+                        st.caption("Structure image unavailable.")
                 # Similarity if available
                 train_fps = get_train_fps()
                 if train_fps is not None:
